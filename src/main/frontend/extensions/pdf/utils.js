@@ -10,6 +10,7 @@ export const viewportToScaled = (
   viewport,
   textLayer
 ) => {
+  console.log('viewportToScaled vwRect', rect);
   const computedStyle = window.getComputedStyle(textLayer.div);
   const matrixString = computedStyle.transform || computedStyle.webkitTransform || computedStyle.mozTransform;
   const domMatrix = new DOMMatrix(matrixString);
@@ -18,14 +19,18 @@ export const viewportToScaled = (
   const [vwTopLeft, vwBottomRight] = [new DOMPoint(rect.left, rect.top), new DOMPoint(rect.left + rect.width, rect.top + rect.height)]
   const [scTopLeft, scBottomRight] = [vwTopLeft.matrixTransform(transform), vwBottomRight.matrixTransform(transform)]
 
-  return {
+  const scaled = {
     x1: Math.min(scTopLeft.x, scBottomRight.x),
     y1: Math.min(scTopLeft.y, scBottomRight.y),
     x2: Math.max(scTopLeft.x, scBottomRight.x),
     y2: Math.max(scTopLeft.y, scBottomRight.y),
     width: viewport.width,
     height: viewport.height
-  }
+  };
+  console.log('viewportToScaled scaled', scaled);
+  console.trace(scaled);
+
+  return scaled;
 }
 
 const pdfToViewport = (pdf, viewport) => {
@@ -51,6 +56,7 @@ export const scaledToViewport = (
   textLayer,
   usePdfCoordinates = false
 ) => {
+  console.log('scaledToViewport scaled', scaled);
   const { width, height } = viewport
 
   if (usePdfCoordinates) {
@@ -82,8 +88,49 @@ export const scaledToViewport = (
     height: y2 - y1,
   };
   console.log('scaledToViewport vwRect', vwRect);
+  console.trace(vwRect);
 
   return vwRect;
+}
+
+export const scaledToTextlayer = (
+  scaled,
+  viewport,
+  usePdfCoordinates = false
+) => {
+  console.log('scaledToTextlayer scaled', scaled);
+  const { width, height } = viewport
+
+  if (usePdfCoordinates) {
+    return pdfToViewport(scaled, viewport)
+  }
+
+  if (scaled.x1 === undefined) {
+    throw new Error('You are using old position format, please update')
+  }
+
+  const domMatrix = new DOMMatrix();
+  const transform = domMatrix.scale(width / scaled.width, height / scaled.height);
+  console.log('scaledToTextlayer transform', transform);
+
+  const [scTopLeft, scBottomRight] = [new DOMPoint(scaled.x1, scaled.y1), new DOMPoint(scaled.x2, scaled.y2)]
+  const [vwTopLeft, vwBottomRight] = [scTopLeft.matrixTransform(transform), scBottomRight.matrixTransform(transform)]
+
+  const x1 = Math.min(vwTopLeft.x, vwBottomRight.x);
+  const y1 = Math.min(vwTopLeft.y, vwBottomRight.y);
+  const x2 = Math.max(vwTopLeft.x, vwBottomRight.x);
+  const y2 = Math.max(vwTopLeft.y, vwBottomRight.y);
+
+  const tlRect = {
+    left: x1,
+    top: y1,
+    width: x2 - x1,
+    height: y2 - y1,
+  };
+  console.log('scaledToTextlayer vwRect', tlRect);
+  console.trace(tlRect);
+
+  return tlRect;
 }
 
 export const getBoundingRect = (clientRects) => {

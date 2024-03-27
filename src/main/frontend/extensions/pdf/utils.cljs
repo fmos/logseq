@@ -29,6 +29,11 @@
   [bounding ^js viewport ^js text-layer]
   (bean/->clj (js-utils/scaledToViewport (bean/->js bounding) viewport text-layer)))
 
+(defn scaled-to-textlayer
+  "Converts a bounding rect from page coordinates to text layer coordinates"
+  [bounding ^js viewport]
+  (bean/->clj (js-utils/scaledToTextlayer (bean/->js bounding) viewport)))
+
 (defn optimize-client-reacts
   [rects]
   (when (seq rects)
@@ -51,6 +56,13 @@
       {:bounding (scaled-to-viewport bounding viewport text-layer)
        :rects    (for [rect rects] (scaled-to-viewport rect viewport text-layer))
        :page     page})))
+
+(defn scaled-to-tl-pos
+  [^js viewer {:keys [page bounding rects]}]
+  (when-let [^js viewport (.. viewer (getPageView (dec page)) -viewport)]
+    {:bounding (scaled-to-textlayer bounding viewport)
+     :rects    (for [rect rects] (scaled-to-textlayer rect viewport))
+     :page     page}))
 
 (defn get-page-bounding
   [^js viewer page-number]

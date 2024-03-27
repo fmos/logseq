@@ -386,7 +386,7 @@
 
   [:div.hls-region-container
    (for [hl page-hls]
-     (let [vw-hl (update-in hl [:position] #(pdf-utils/scaled-to-vw-pos viewer %))]
+     (let [vw-hl (update-in hl [:position] #(pdf-utils/scaled-to-tl-pos viewer %))]
        (rum/with-key
          (if (get-in hl [:content :image])
            (pdf-highlight-area-region viewer vw-hl hl ops)
