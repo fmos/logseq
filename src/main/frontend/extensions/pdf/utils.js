@@ -13,7 +13,7 @@ export const viewportToScaled = (
   const computedStyle = window.getComputedStyle(textLayer.div);
   const matrixString = computedStyle.transform || computedStyle.webkitTransform || computedStyle.mozTransform;
   const domMatrix = new DOMMatrix(matrixString);
-  const transform = domMatrix.invertSelf();  
+  const transform = domMatrix.invertSelf();
   
   const [vwTopLeft, vwBottomRight] = [new DOMPoint(rect.left, rect.top), new DOMPoint(rect.left + rect.width, rect.top + rect.height)]
   const [scTopLeft, scBottomRight] = [vwTopLeft.matrixTransform(transform), vwBottomRight.matrixTransform(transform)]
@@ -48,6 +48,7 @@ const pdfToViewport = (pdf, viewport) => {
 export const scaledToViewport = (
   scaled,
   viewport,
+  textLayer,
   usePdfCoordinates = false
 ) => {
   const { width, height } = viewport
@@ -60,11 +61,32 @@ export const scaledToViewport = (
     throw new Error('You are using old position format, please update')
   }
 
+  /*
   const x1 = (width * scaled.x1) / scaled.width
   const y1 = (height * scaled.y1) / scaled.height
 
   const x2 = (width * scaled.x2) / scaled.width
   const y2 = (height * scaled.y2) / scaled.height
+*/
+  const computedStyle = window.getComputedStyle(textLayer.div);
+  const matrixString = computedStyle.transform || computedStyle.webkitTransform || computedStyle.mozTransform;
+  const domMatrix = new DOMMatrix(matrixString);
+  const transform = domMatrix;
+  console.log('caledToViewport transform', transform);
+
+  const [scTopLeft, scBottomRight] = [new DOMPoint(scaled.x1, scaled.y1), new DOMPoint(scaled.x2, scaled.y2)]
+  const [vwTopLeft, vwBottomRight] = [scTopLeft.matrixTransform(transform), scBottomRight.matrixTransform(transform)]
+
+/*   const x1 = (width * scaled.x1) / scaled.width
+  const y1 = (height * scaled.y1) / scaled.height
+
+  const x2 = (width * scaled.x2) / scaled.width
+  const y2 = (height * scaled.y2) / scaled.height
+ */
+  const x1 = Math.min(vwTopLeft.x, vwBottomRight.x);
+  const y1 = Math.min(vwTopLeft.y, vwBottomRight.y);
+  const x2 = Math.max(vwTopLeft.x, vwBottomRight.x);
+  const y2 = Math.max(vwTopLeft.y, vwBottomRight.y);
 
   return {
     left: x1,
