@@ -26,8 +26,8 @@
   (bean/->clj (js-utils/viewportToScaled (bean/->js bounding) viewport text-layer)))
 
 (defn scaled-to-viewport
-  [bounding ^js viewport]
-  (bean/->clj (js-utils/scaledToViewport (bean/->js bounding) viewport)))
+  [bounding ^js viewport ^js text-layer]
+  (bean/->clj (js-utils/scaledToViewport (bean/->js bounding) viewport text-layer)))
 
 (defn optimize-client-reacts
   [rects]
@@ -45,10 +45,12 @@
 
 (defn scaled-to-vw-pos
   [^js viewer {:keys [page bounding rects]}]
-  (when-let [^js viewport (.. viewer (getPageView (dec page)) -viewport)]
-    {:bounding (scaled-to-viewport bounding viewport)
-     :rects    (for [rect rects] (scaled-to-viewport rect viewport))
-     :page     page}))
+  (when-let [^js page-view (.. viewer (getPageView (dec page)))]
+    (let [^js viewport (.-viewport page-view)
+          ^js text-layer (.-textLayer page-view)]
+      {:bounding (scaled-to-viewport bounding viewport text-layer)
+       :rects    (for [rect rects] (scaled-to-viewport rect viewport text-layer))
+       :page     page})))
 
 (defn get-page-bounding
   [^js viewer page-number]
