@@ -8,12 +8,12 @@ export const getPdfjsLib = () => {
 export const viewportToScaled = (
   rect,
   viewport,
-  textLayer,
+  textlayer,
   rotate
 ) => {
   console.log('viewportToScaled vwRect', rect, rotate);
   
-  const computedStyle = window.getComputedStyle(textLayer.div);
+  const computedStyle = window.getComputedStyle(textlayer.div);
   const matrixString = rotate ? computedStyle.transform || computedStyle.webkitTransform || computedStyle.mozTransform : '';
   const domMatrix = new DOMMatrix(matrixString);
   const transform = domMatrix.invertSelf();
@@ -55,25 +55,25 @@ const pdfToViewport = (pdf, viewport) => {
 export const scaledToViewport = (
   scaled,
   viewport,
-  textLayer,
-  rotate,
-  usePdfCoordinates = false
+  textlayer,
+  rotate
 ) => {
   console.log('scaledToViewport scaled', scaled, rotate);
-  const { width, height } = viewport
-
-  if (usePdfCoordinates) {
-    return pdfToViewport(scaled, viewport)
-  }
 
   if (scaled.x1 === undefined) {
     throw new Error('You are using old position format, please update')
   }
 
-  const computedStyle = window.getComputedStyle(textLayer.div);
-  const matrixString = rotate ? computedStyle.transform || computedStyle.webkitTransform || computedStyle.mozTransform : '';
-  const domMatrix = new DOMMatrix(matrixString);
-  const transform = domMatrix.scale(width / scaled.width, height / scaled.height);
+  const domMatrix = (function () {
+    if (rotate) {
+      const computedStyle = window.getComputedStyle(textlayer.div);
+      const matrixString = computedStyle.transform || computedStyle.webkitTransform || computedStyle.mozTransform;
+      return new DOMMatrix(matrixString);
+    } else {
+      return new DOMMatrix();
+    }
+  })();
+  const transform = domMatrix.scale(viewport.width / scaled.width, viewport.height / scaled.height);
   console.log('scaledToViewport transform', transform);
 
   const [scTopLeft, scBottomRight] = [new DOMPoint(scaled.x1, scaled.y1), new DOMPoint(scaled.x2, scaled.y2)]
